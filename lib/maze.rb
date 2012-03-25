@@ -2,24 +2,23 @@ module Maze
     def self.execute
         #Generate maze
         board=Board.new 20, 20
-        puts 'what the fuck'
         board.show
-        puts "I got here"
         #Play maze
     end
     class Board
         def initialize(width, length)
-          @@board=[]
-          length.times do
-            @@board << generate_row(width)
-          end
-        end
-        def generate_row(width)
-            row=[]
-            width.times do
-                row << Cell.new
+            @@board= Array.new(length) { Array.new(width) }
+            (0...length).each do |column|
+                (0...width).each do |row|
+                    @@board[column][row]= Cell.new(column,row)
+                end
             end
-            row
+            @@board
+        end
+        #This lets us reference cells by board[0][0]
+        #which is useful when debugging in irb
+        def [] i
+            @@board[i]
         end
         def show
             # print top edge of board
@@ -38,7 +37,9 @@ module Maze
         end
 
         class Cell
-            def initialize
+            def initialize column, row
+                @column=column
+                @row=row
                 @right_wall=true
                 @bottom_wall=true
             end
