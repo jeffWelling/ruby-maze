@@ -1,5 +1,23 @@
+#!/usr/bin/ruby
 require 'pp'
+require 'curses'
+
 class Maze
+    def initialize l=20, w=20, v=false
+        board=Board.new( l, w )
+        init_screen do
+            board.generate_RecursiveBacktracker
+        end
+    end
+    def init_screen
+        Curses.init_screen
+        Curses.stdscr.keypad(true)
+        begin
+            yield
+        ensure
+            Curses.close_screen
+        end
+    end
     class Board
         def initialize length, width
             @@board=[]
@@ -10,24 +28,33 @@ class Maze
                 }
             }
         end
+        def write_to_screen line, col, text
+            text.split("\n").each {|text|
+                Curses.setpos(line,col)
+                Curses.addstr(text)
+                line+=1
+            }
+            Curses.refresh
+        end
         def [] i
             @@board[i]
         end
         def show
             # print top edge of board
-            boarder_length= (@@board.length.*2) +1
+            output=''
+            boarder_length= (@@board[0].size.*2) +1
             boarder_length.times do
-                print "_"
+                output << "_"
             end
-            print "\n"
+            output << "\n"
             @@board.each {|row|
-                print "|"
+                output << "|"
                 row.each {|cell|
-                    cell.display
+                    output << cell.display rescue nil
                 }
-                print "\n"
+                output << "\n"
             }
-            nil
+            output
         end
         def get_random_cell
             @@board[rand(@@board.size)][rand(@@board[0].size)]
@@ -79,11 +106,13 @@ class Maze
                     current_cell=chosen_cell
                     current_cell.visited=true
                     stack<<current_cell
+                    Curses.clear
+                    write_to_screen( 0,0,show )
+                    sleep( 0.3 )
                 else
                     current_cell=stack.pop
                 end
             end
-            show
         end
     end
     class Cell
@@ -97,16 +126,18 @@ class Maze
         attr_reader :row, :column
         attr_accessor :visited, :right_wall, :bottom_wall
         def display
+            o=''
             if @bottom_wall
-                print "_"
+                o<< "_"
             else
-                print " "
+                o<< " "
             end
             if @right_wall
-                print "|"
+                o<< "|"
             else
-                print " "
+                o<< " "
             end
+            o
         end
         def neighbors
             neighbors=[]
@@ -128,3 +159,4 @@ class Maze
         end
     end
 end
+Maze.new 20,40,true
